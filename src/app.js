@@ -1,3 +1,7 @@
+import express from "express";
+import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
