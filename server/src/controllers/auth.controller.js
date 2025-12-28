@@ -1,18 +1,23 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const { generateToken } = require("../utils/jwt");
+// server/src/controllers/auth.controller.js
 
-exports.register = async (req, res) => {
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
+import { generateToken } from "../utils/jwt.js";
+
+export const register = async (req, res) => {
   try {
-    const { name, email, password, role, semester } = req.body;
+    const { firstName, lastName, email, password, role, semester } = req.body;
 
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "User exists" });
+    if (existing) {
+      return res.status(400).json({ success: false, message: "User exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
+      firstName,
+      lastName,
       email,
       password: hashedPassword,
       role,
@@ -20,38 +25,57 @@ exports.register = async (req, res) => {
     });
 
     res.status(201).json({
-      token: generateToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+        accessToken: generateToken(user),
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+      error: err.message,
+    });
   }
 };
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
 
     res.json({
-      token: generateToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+        accessToken: generateToken(user),
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: err.message,
+    });
   }
 };
