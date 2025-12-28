@@ -1,25 +1,32 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes.js";
+import dotenv from "dotenv";
 
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+import authRoutes from "./routes/auth.routes.js";
+
+dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://collegeops.vercel.app",
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("CollegeOps API running");
+// health check
+app.get("/health", (req, res) => {
+  res.json({ success: true, message: "CollegeOps API running" });
 });
 
-// routes (we will add gradually)
-app.use("/api/auth", require("./routes/auth.routes"));
+// routes
+app.use("/api/auth", authRoutes);
 
-module.exports = app;
-app.use("/api/admin", require("./routes/admin.routes"));
-app.use("/api/notes", require("./routes/notes.routes"));
-app.use("/api/assignments", require("./routes/assignment.routes"));
-app.use("/api/announcements", require("./routes/announcement.routes"));
+export default app;
